@@ -1,0 +1,41 @@
+# AI Prompts History - Dopamine Challenge Meditation App
+
+This document tracks the core instructional prompts and feature requests provided to the AI to construct this application from scratch.
+
+## Phase 1: Inception & Core Vision Tracking
+**Initial Idea & Logic Prompts:**
+* "Build a web-based meditation application that uses computer vision (MediaPipe) to track user posture and stillness."
+* "The app will feature a 'dopamine challenge' structure where users must maintain a cross-legged position within an 'aura' boundary for increasing time intervals (starting at 30 seconds up to 108 minutes)."
+* "Implement real-time movement detection to trigger 'strikes'."
+* "Manage a level-based progression system and calculate points based on a specific formula: (total seconds / 3.1413)."
+* "Create a premium, dark-mode UI to gamify the meditation experience."
+
+## Phase 2: Feedback & Aura Evolution
+**Refining the Physics & Demo Mode Prompts:**
+* "Finalize the meditation application by implementing a fully interactive 1-minute demo gamemode."
+* "Refine the aura evolution physics to scale with user level."
+* "Ensure precise, reliable posture tracking via nose and chest nodes."
+* "Relocate strike indicators to the bottom-right corner, fix background rendering conflicts, and provide a polished, immersive experience that allows new users to visualize the journey from black to silver aura in an accelerated, gamified demo session."
+* "Fix movement detection bugs and expand the movement tracking nodes to include eyes and shoulders for higher sensitivity."
+* "Implement a 2-second initial 'black aura' phase where energy balls submerge into the user's body before the aura begins its gradual, level-based evolution."
+
+## Phase 3: Yoga Stage Mechanics & Auth Flow
+**Multi-Mode & Backend Simulation Prompts:**
+* "Feature addition in the meditation app. I want to add 3 levels of the app, Which user can select at the main screen, just above the meditation button... Taken from the three stage laterss in yoga, dharna, dhyana, samadhi."
+* "Dharna is, easy, dhayana is medium and samadhi as hard. In dharna... at each 21 second, the aura ball will change and submerge into that aura layer.. from black to silver."
+* "Dhayna, the aura ball .start from black to silver, change in aura in each 48 second."
+* "Samadhi, the aura changes at every 108 seconds. from black to silver."
+* "I want to add a small leaderboard with other player around the world."
+* "Login for users like any other app has, and particle system. If a new user, sign on, email id password, and conformation. If already user, login by email id and passoword."
+* "Once login, you will see the type of meditation you want to do. The demo option will be at the login screen."
+
+## Phase 4: UI Unification & Custom Tracking Mapping
+**Polish & Interactive Mapping Prompts:**
+* "Fixes: when clicking on demo, the signon tab is still showing.., it shall be go.. and directly move to meditation."
+* "In other modes dharana, dhayan samadhi, all the modes shall start from black aura, and halo around body like in normal, it is jus that the change of aura bubble intturn halo will be a time bound."
+* "UI fixes: used click on meditation the timing should run on the top centre of the screen rather than on the centre, eye closing text all at the top centre."
+* "Issue in normal mode: it directly start from level 9 yellow, where it should start from black. Fix dharana mode issue where it has aura bubble as grey instead of starting from black."
+* "Global master which is leading bord shall come in top right corner."
+* "Remove the youtube audio listing feature completely."
+* "Set custom target was ment so that himself can click on his eye nose chin shoulder both and forhead. hence, give this feature and then track according the movement... the selected target can we shown bby the points in green colour showing your target has been selected."
+* "Idea was that aura bubble will come on body and slowly the aura will form based upon the colour of aura and it will strat from black ... all the way to silver but right now in all the modes bubbles are dropping, showing, it is going inside the body but aura around the body is not visible... it should be visible.. starting from thin to ... all the way to big... as the bubble of aura goes inside that aura sheet, it will slowly glow and become big and then denser... this is how it should happen in all the modes."

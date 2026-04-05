@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopamine Challenge: Meditation</title>
+    <!-- MediaPipe dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d0d">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- User Inter Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Hidden Assets -->
+        <video id="input_video" style="display: none;" playsinline></video>
+        <img id="virtual_bg" src="" crossorigin="anonymous" style="display: none;">
+        
+        <!-- Canvas for showing drawing aura and particles -->
+        <canvas id="output_canvas" class="aura-canvas hidden"></canvas>
+        <div id="ambient_glow" class="ambient-glow"></div>
+
+
+
+        <!-- Right aligned global leaderboard button on home -->
+        <button id="btn_leaderboard_home" class="glass-btn" style="position: absolute; top: 20px; right: 20px; width: 180px; z-index: 50; display: none;" onclick="toggleLeaderboard()">🏆 LEADERBOARD</button>
+        
+        <!-- Leaderboard Modal -->
+        <aside id="leaderboard_panel" class="glass-panel hidden" style="position: absolute; top: 70px; right: 20px; width: 250px; z-index: 51; padding: 20px;">
+            <h2 id="leaderboard_title" style="font-size: 1.1rem; color: var(--accent-gold); margin-bottom: 15px;">GLOBAL MASTERS</h2>
+            <ul id="leaderboard_list" style="list-style: none; padding: 0; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.8;">
+                <!-- Dynamically populated -->
+            </ul>
+            <button class="btn-toggle glass-btn" onclick="closeLeaderboard()">Close</button>
+        </aside>
+
+        <!-- ===================================== -->
+        <!-- LOGIN SCREEN -->
+        <!-- ===================================== -->
+        <section id="login_screen" class="screen-layer" style="display: flex; justify-content: center; align-items: center; gap: 40px; padding: 20px;">
+            <div class="login-container glass-panel" style="padding: 30px; width: 400px;">
+                <!-- Tab Switching -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="glass-btn" id="btn_tab_signin" onclick="switchLoginTab('signin')" style="border-color: var(--accent-gold);">Sign In</button>
+                    <button class="glass-btn" id="btn_tab_signup" onclick="switchLoginTab('signup')">Sign Up</button>
+                </div>
+                
+                <!-- Sign In Form -->
+                <div id="form_signin">
+                    <h1 class="main-title" style="font-size: 1.8rem;">WELCOME BACK</h1>
+                    <p class="subtitle">ENTER CREDENTIALS</p>
+                    <div class="form-group" style="text-align: left; margin-top: 20px;">
+                        <label>Email</label>
+                        <input type="email" id="signin_email" placeholder="Email">
+                    </div>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Password</label>
+                        <input type="password" id="signin_pass" placeholder="Password">
+                    </div>
+                    <button class="btn-primary" style="margin-top: 20px;" onclick="signIn()">LOGIN</button>
+                </div>
+
+                <!-- Sign Up Form -->
+                <div id="form_signup" style="display: none;">
+                    <h1 class="main-title" style="font-size: 1.8rem;">JOIN THE REALM</h1>
+                    <p class="subtitle">NEW WANDERER</p>
+                    <div class="form-group" style="text-align: left; margin-top: 10px;">
+                        <label>Name</label>
+                        <input type="text" id="signup_name" placeholder="Name">
+                    </div>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Age</label>
+                        <input type="number" id="signup_age" placeholder="Age" min="1">
+                    </div>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Email</label>
+                        <input type="email" id="signup_email" placeholder="Email">
+                    </div>
+                    <div class="form-group" style="text-align: left;">
+                        <label>Password</label>
+                        <input type="password" id="signup_pass" placeholder="Password">
+                    </div>
+                    <button class="btn-primary" style="margin-top: 20px;" onclick="signUp()">REGISTER</button>
+                </div>
+                <button type="button" class="glass-btn btn-toggle" style="margin-top:20px; width: 100%; border-color: var(--accent-success);" onclick="runOneMinDemo()">👀 Watch 1-Min Demo Journey</button>
+            </div>
+            
+            <!-- Aura Preview Side Panel (Relocated to Login) -->
+            <aside class="preview-panel glass-panel" id="preview_panel" style="position: relative; right: auto; top: auto; transform: none;">
+                <h3 class="preview-title">AURA EVOLUTION</h3>
+                <p class="preview-sub">Demo Visualization</p>
+                <div class="sil-container">
+                    <div class="glow-orb"></div>
+                    <svg viewBox="0 0 100 150" class="meditator-svg">
+                        <circle cx="50" cy="35" r="14" fill="#eee"/>
+                        <path d="M 50 55 C 65 55, 74 70, 75 100 Q 50 100, 25 100 C 26 70, 35 55, 50 55 Z" fill="#eee"/>
+                        <ellipse cx="50" cy="105" rx="38" ry="14" fill="#eee"/>
+                    </svg>
+                </div>
+                <div class="preview-label-box"></div>
+            </aside>
+        </section>
+
+        <!-- ===================================== -->
+        <!-- HOME SCREEN -->
+        <!-- ===================================== -->
+        <section id="home_screen" class="screen-layer hidden">
+            <header class="home-header">
+                <h1 class="main-title">DOPAMINE CHALLENGE</h1>
+                <p class="subtitle">ABOUT THE APP</p>
+                <div class="rules-box glass-panel">
+                    <p>Welcome to the meditation platform. Sit perfectly still to evolve your energy from Black to Silver.</p>
+                    <ul class="rules-list">
+                        <li>Stay perfectly still. Large movements register as strikes.</li>
+                        <li>3 strikes = Reset your Unmoved Timer & loss of Pie points.</li>
+                        <li>Unmoved for 3 mins = +7 Pie Points.</li>
+                        <li>Unmoved for 21 mins = +7 Pie Points.</li>
+                        <li>Pie Points directly boost your Aura Level evolution!</li>
+                    </ul>
+                </div>
+            </header>
+
+            <main class="home-form glass-panel">
+                <h2>Journey Setup</h2>
+                
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="user_name" placeholder="Your Name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="user_age" placeholder="Age" min="1" oninput="this.value = Math.abs(this.value)">
+                </div>
+                
+                <button type="button" class="glass-btn btn-toggle" style="margin-top:10px; width: 100%; margin-bottom: 20px; display: none;" onclick="runOneMinDemo()">👀 Watch 1-Min Demo Journey</button>
+
+                <div class="form-group">
+                    <label>Target Mins</label>
+                    <input type="number" id="target_mins" placeholder="e.g. 10" onchange="checkTarget()">
+                </div>
+
+                <div class="form-group">
+                    <label>Environment</label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                        <input type="checkbox" id="bg_blur" style="width: 20px; height: 20px;">
+                        <span style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Blur My Room</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Yoga Mode (Optional)</label>
+                    <div style="display: flex; gap: 10px; margin-top: 5px; flex-wrap: wrap; font-size: 0.85rem;">
+                        <label style="color: rgba(255,255,255,0.8);"><input type="radio" name="yoga_mode" value="dharana"> Dharana (Easy)</label>
+                        <label style="color: rgba(255,255,255,0.8);"><input type="radio" name="yoga_mode" value="dhyana"> Dhyana (Medium)</label>
+                        <label style="color: rgba(255,255,255,0.8);"><input type="radio" name="yoga_mode" value="samadhi"> Samadhi (Hard)</label>
+                        <label style="color: rgba(255,255,255,0.8);"><input type="radio" name="yoga_mode" value="normal" checked> Normal</label>
+                    </div>
+                </div>
+
+                <button class="btn-primary" style="margin-top:20px;" onclick="goToMeditation()">MEDITATE</button>
+            </main>
+        </section>
+
+        <!-- ===================================== -->
+        <!-- MEDITATION SCREEN -->
+        <!-- ===================================== -->
+        <section id="meditation_screen" class="screen-layer hidden">
+            
+            <button id="btn_toggle_panel" class="panel-toggle hidden" onclick="toggleSidebar()">☰</button>
+
+            <!-- Left Dashboard UI -->
+            <aside class="left-panel glass-panel" id="meditation_sidebar">
+                <h2 class="sidebar-title" id="user_profile_title">DOPAMINE UI</h2>
+                
+                <div class="stats-grid">
+                    <div class="level-badge"><span class="label">LEVEL</span><span id="level_display" class="value">1</span></div>
+                    <div class="points-badge"><span class="label">POINTS</span><span id="points_display" class="value">0.00</span></div>
+                    <div class="aura-badge"><span class="label">AURA</span><span id="aura_display" class="value" style="color: #fff">Black</span></div>
+                </div>
+                <div class="pie-badge" style="text-align: center; margin-bottom: 20px;">
+                    <span class="label">PIE POINTS</span>
+                    <span id="pie_display" class="value" style="color: var(--accent-gold);">0</span>
+                </div>
+                
+                <div class="audio-control setup-only">
+                    <button id="btn_custom" class="glass-btn" style="margin-top:10px; width:100%; border-color: var(--accent-gold);" onclick="startCustomTracking()">📌 Set Custom Targets</button>
+                    <button class="glass-btn btn-danger" style="margin-top:10px; width:100%;" onclick="resetProgress()">Hard Reset</button>
+                </div>
+
+                <div class="main-actions">
+                    <button id="btn_start" class="btn-primary" onclick="startGame()">START MEDITATION</button>
+                    <button id="btn_save_custom" class="btn-primary hidden" onclick="saveCustomTracking()">SAVE TARGETS</button>
+                    <button id="btn_pause" class="btn-primary hidden" onclick="togglePause()">PAUSE</button>
+                    <button class="glass-btn" style="margin-top:10px" onclick="goHome()">Back to Home</button>
+                </div>
+            </aside>
+
+            <!-- Strikes display moved to middle-left -->
+            <div class="strike-container-vertical" id="strike_container">
+                <div class="strike" id="strike_1"></div>
+                <div class="strike" id="strike_2"></div>
+                <div class="strike" id="strike_3"></div>
+            </div>
+
+            <!-- Main Center Timer/Status -->
+            <main class="top-center-hud">
+                <h1 id="status_text" class="status-pulse">AURA READY</h1>
+                <h2 id="timer_text" class="timer-display">00:00</h2>
+                <div id="eye_warning" class="eye-warning hidden">CLOSE YOUR EYES</div>
+            </main>
+        </section>
+        
+        <!-- Camera Loading Overlay -->
+        <div id="loading_overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Initializing Aura Engine... (May take 5-10 seconds)</p>
+        </div>
+
+    </div>
+    
+    <script src="main.js"></script>
+    <script src="vision.js"></script>
+    
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered successfully!', reg))
+            .catch(err => console.error('Service Worker registration failed:', err));
+        });
+      }
+    </script>
+</body>
+</html>

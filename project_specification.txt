@@ -1,0 +1,39 @@
+# Dopamine Challenge: Meditation Application Specification
+
+## Overview
+This application is a gamified, camera-based meditation platform built mechanically around the concept of a "Dopamine Challenge". The objective is to encourage physical stillness over prolonged periods via engaging visual feedback, using Google MediaPipe to track user posture strictly. 
+
+## 1. Core Mechanics
+- **Vision Tracking engine:** Uses MediaPipe Holistic algorithm via the user's webcam (`input_video`).
+- **Strict Stillness:** If the user moves beyond a dynamically tracked shoulder-width threshold, a "strike" is recorded. Wait 3 frames to debounce noise.
+- **Fail State Reset:** Accumulating 3 strikes completely destroys the user's current "Unmoved Timer" streak.
+- **Eye Tracking:** If the user opens their eyes for more than 3 continuous seconds after the first 30 seconds, it instantly fails the meditation sequence.
+- **Pie Points:** Earning passive 'currency' by achieving unbroken stillness streaks.
+   - 3 Minutes unmoving -> +7 Pie Points
+   - 21 Minutes unmoving -> +7 Pie Points
+
+## 2. Dynamic Aura Progression & Bubble Engine
+The core visualization of the meditation is the **Aura Engine**. 
+1. **The Sequence of Growth:** The user's goal is to evolve from Level 0 (Black) into Level 20 (Silver) through 21 specific thresholds of color.
+2. **Thickness & Density:** The aura is mapped directly onto the user's bodily silhouette. Crucially, as the user progresses in level, the halo around the body expands smoothly in `blurScale` and becomes aggressively denser by drawing multiple layered opacities via `auraBaseAlpha`. This means higher levels appear visually bigger and 'thicker' on screen.
+3. **Ambient Bubbles:** Ambient particles of the corresponding Aura Level's color fall constantly into the bottom viewport.
+4. **Submerging (Level-Up) Burst:** Once a player achieves a timed milestone, a "Level Up" command rapidly bursts 80 new energy bubbles downward from the ceiling, splashing "inside" the aura bounding box to simulate a visceral energy transition into the newly unlocked color.
+
+## 3. Game Modes (Yoga Stages)
+The application has 4 primary progression tempos based on varying difficulties:
+- **Normal Mode:** Baseline pacing (Black to Silver). Color up scales along fixed geometric thresholds: 0s, 30s, 60s, 120s... all the way to 108 minutes.
+- **Dharana (Easy):** Levels evolve identically and visually, but strictly every **21 seconds** continuously. 
+- **Dhyana (Medium):** Levels evolve strictly every **48 seconds**.
+- **Samadhi (Hard):** Levels evolve strictly every **108 seconds**.
+
+## 4. Accounts & Leaderboards
+- **Auth Flow:** Players must Sign In or Sign Up using a dedicated tabbed Entrance Interface. Credentials (email, name, password) are handled locally for this MVP phase mapping to `localStorage`.
+- **Global Leaderboard:** Depending on the meditation Mode chosen on the login screen, a contextual dynamic leaderboard checks `mockLeaderboards`. It floats statically in the top-right corner to foster competitive edge.
+- **1-Min Demo Sequence:** An isolated demo mode triggers a rapid 60-second bypass session where users witness their Aura evolving perfectly from Black to Silver bypassing all actual time bounds or authentication requirements.
+
+## 5. Interactive Target Calibration System
+Users are typically evaluated against a strict array of basic landmark nodes (Head, Chest, Shoulders). The application provides an overriding **Custom Tracking Points** mechanism:
+- Users click "Set Custom Targets".
+- The Canvas detects exactly where they click their physical live shape.
+- Leveraging `latestLandmarks.poseLandmarks`, the algorithm calculates the closest body node point and locks it in cleanly with a green identifier ring.
+- Clicking "Save Targets" configures the whole validation loop to only fail movement on *that specific configured array of body-parts* allowing precise meditation targeting (e.g. meditating focusing strictly on not moving your chin).
