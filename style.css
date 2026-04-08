@@ -66,6 +66,10 @@ body {
     z-index: -1;
 }
 
+.hidden:not(.screen-layer):not(.loading-overlay) {
+    display: none !important;
+}
+
 /* Base Canvas for rendering */
 .aura-canvas {
     position: absolute;
@@ -340,7 +344,7 @@ button {
 /* Top Center HUD UI */
 .top-center-hud {
     position: absolute;
-    top: 15%;
+    top: 3%;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -349,10 +353,10 @@ button {
 }
 
 .status-pulse {
-    font-size: 1.2rem;
-    letter-spacing: 4px;
+    font-size: 1rem;
+    letter-spacing: 3px;
     color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     animation: pulseText 2s infinite;
 }
 
@@ -384,11 +388,11 @@ button {
 }
 
 .timer-display {
-    font-size: 6rem;
+    font-size: 3rem;
     font-weight: 800;
     color: var(--aura-color); 
-    text-shadow: 0 0 40px var(--aura-color);
-    margin-bottom: 30px;
+    text-shadow: 0 0 20px var(--aura-color);
+    margin-bottom: 10px;
     font-variant-numeric: tabular-nums;
     transition: color 1s, text-shadow 1s;
 }

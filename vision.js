@@ -28,7 +28,7 @@ const TARGET_NODES = [
 
 // Smoothing Engine
 let strikeDebounceCounter = 0;
-const STRIKE_FRAMES_REQ = 5; 
+const STRIKE_FRAMES_REQ = 10; 
 const CALIBRATION_TARGET = 60; // Approx 2 seconds at 30fps
 
 // Offscreen canvas for masking
@@ -151,9 +151,9 @@ function initVision() {
             smoothLandmarks: true,
             enableSegmentation: true,
             smoothSegmentation: true,
-            refineFaceLandmarks: false,
-            minDetectionConfidence: 0.6,
-            minTrackingConfidence: 0.6
+            refineFaceLandmarks: true,
+            minDetectionConfidence: 0.7,
+            minTrackingConfidence: 0.7
         });
         
         // CLICK HANDLER FOR CUSTOM TARGETS
@@ -405,14 +405,18 @@ function processGameFrame(results, ctx, w, h) {
         return results.poseLandmarks[id];
     });
 
+    const isSamadhi = (typeof gameState !== 'undefined' && gameState.mode === 'samadhi');
+    const dynamicStrikeFrames = isSamadhi ? 5 : STRIKE_FRAMES_REQ;
+
     // Calculate shoulder width for dynamic threshold limits (to simulate 3cm-4cm)
     let dynamicThreshold = 0.08; 
     if (results.poseLandmarks[11] && results.poseLandmarks[12]) {
         const sx = results.poseLandmarks[11].x - results.poseLandmarks[12].x;
         const sy = results.poseLandmarks[11].y - results.poseLandmarks[12].y;
         const shoulderWidth = Math.sqrt(sx*sx + sy*sy);
-        // Estimate 4cm as 10% of total shoulder width distance across camera pane
-        dynamicThreshold = Math.max(0.04, shoulderWidth * 0.15); 
+        // Extremely strict (8%) for samadhi, generous (15%) for normal
+        const thresholdMultiplier = isSamadhi ? 0.08 : 0.15;
+        dynamicThreshold = Math.max(0.04, shoulderWidth * thresholdMultiplier); 
     }
 
     if (isCalibrating) {
@@ -439,7 +443,7 @@ function processGameFrame(results, ctx, w, h) {
 
         if (strikeTriggered) {
             strikeDebounceCounter++;
-            if (strikeDebounceCounter >= STRIKE_FRAMES_REQ) {
+            if (strikeDebounceCounter >= dynamicStrikeFrames) {
                 registerStrike(); 
                 strikeDebounceCounter = 0; // Reset
                 baselinePoints = [ ...currentPoints ]; // Recalibrate instantly so they don't bounce rapid strikes

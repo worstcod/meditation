@@ -42,6 +42,7 @@ const BACKGROUNDS = {
 document.addEventListener('DOMContentLoaded', () => {
     loadProgress();
     checkDecay();
+    checkAuth();
     updateUI();
 });
 
@@ -91,6 +92,18 @@ function checkDecay() {
 
 let currentUser = null;
 
+function checkAuth() {
+    const savedUser = localStorage.getItem('meditation_current_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        document.getElementById('user_name').value = currentUser.name;
+        document.getElementById('user_age').value = currentUser.age || '';
+        document.getElementById('login_screen').classList.add('hidden');
+        document.getElementById('home_screen').classList.remove('hidden');
+        document.getElementById('btn_leaderboard_home').style.display = 'block';
+    }
+}
+
 function switchLoginTab(tab) {
     if (tab === 'signin') {
         document.getElementById('form_signin').style.display = 'block';
@@ -113,6 +126,9 @@ function signUp() {
     
     if (!name || !email || !pass) return alert("Please fill all required fields.");
     
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return alert("Please enter a valid email address.");
+    
     let users = JSON.parse(localStorage.getItem('meditation_users') || "{}");
     if (users[email]) return alert("Email already registered!");
     
@@ -132,6 +148,8 @@ function signIn() {
     
     if (users[email] && users[email].password === pass) {
         currentUser = users[email];
+        localStorage.setItem('meditation_current_user', JSON.stringify(currentUser));
+        
         document.getElementById('user_name').value = currentUser.name;
         document.getElementById('user_age').value = currentUser.age || '';
         
@@ -139,15 +157,31 @@ function signIn() {
         document.getElementById('home_screen').classList.remove('hidden');
         document.getElementById('btn_leaderboard_home').style.display = 'block';
     } else if (email === 'admin' && pass === 'admin') {
-        // Fallback for easy testing
         currentUser = { name: "Admin", age: 99 };
-        document.getElementById('user_name').value = "Admin";
+        localStorage.setItem('meditation_current_user', JSON.stringify(currentUser));
+        
+        document.getElementById('user_name').value = currentUser.name;
+        document.getElementById('user_age').value = currentUser.age || '';
+        
         document.getElementById('login_screen').classList.add('hidden');
         document.getElementById('home_screen').classList.remove('hidden');
         document.getElementById('btn_leaderboard_home').style.display = 'block';
     } else {
         alert("Invalid email or password.");
     }
+}
+
+function logOut() {
+    currentUser = null;
+    localStorage.removeItem('meditation_current_user');
+    
+    document.getElementById('signin_email').value = '';
+    document.getElementById('signin_pass').value = '';
+    
+    document.getElementById('home_screen').classList.add('hidden');
+    document.getElementById('login_screen').classList.remove('hidden');
+    document.getElementById('btn_leaderboard_home').style.display = 'none';
+    closeLeaderboard();
 }
 
 function getModeRadios() {
@@ -194,6 +228,8 @@ function toggleLeaderboard() {
         
         ul.innerHTML = listHTML;
         p.classList.remove('hidden');
+    } else {
+        p.classList.add('hidden');
     }
 }
 
