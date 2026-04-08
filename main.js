@@ -16,6 +16,7 @@ const LEVEL_THRESHOLDS = [
 let gameState = {
     currentLevel: 0,
     totalElapsedSeconds: 0,
+    maxLevelReached: 0,
     unmovedSeconds: 0,
     strikes: 0,
     piePoints: 0,
@@ -27,6 +28,56 @@ let gameState = {
     lastLogin: null,
     mode: 'normal'
 };
+
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function playLevelUpSound() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(432, audioCtx.currentTime); 
+    osc.frequency.exponentialRampToValueAtTime(108, audioCtx.currentTime + 2.0);
+    
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.1);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3.0);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 3.0);
+}
+
+function playStrikeSound() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+    
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.2);
+}
 
 let gameLoopInterval = null;
 
@@ -101,7 +152,18 @@ function checkAuth() {
         document.getElementById('login_screen').classList.add('hidden');
         document.getElementById('home_screen').classList.remove('hidden');
         document.getElementById('btn_leaderboard_home').style.display = 'block';
+        updateLifetimeStats();
     }
+}
+
+function updateLifetimeStats() {
+    if (!currentUser) return;
+    let history = JSON.parse(localStorage.getItem(`meditation_history_${currentUser.email || currentUser.name}`) || "[]");
+    let totalSessions = history.length;
+    let totalSeconds = history.reduce((acc, session) => acc + session.seconds, 0);
+    
+    document.getElementById('stat_sessions').innerText = totalSessions;
+    document.getElementById('stat_minutes').innerText = Math.floor(totalSeconds / 60);
 }
 
 function switchLoginTab(tab) {
@@ -247,6 +309,7 @@ function checkTarget() {
 }
 
 function goToMeditation() {
+    initAudio();
     const name = document.getElementById('user_name').value || 'Wanderer';
     document.getElementById('user_profile_title').innerText = `${name.toUpperCase()}'S JOURNEY`;
 
@@ -371,13 +434,14 @@ function startGame() {
 
         document.body.classList.add('is-meditating');
         document.getElementById('btn_start').classList.add('hidden');
-        document.getElementById('btn_pause').classList.remove('hidden');
+        document.getElementById('playing_controls').classList.remove('hidden');
 
         // Reset runtime vars
         gameState.isRunning = true;
         gameState.isPaused = false;
         gameState.strikes = 0;
         gameState.totalElapsedSeconds = 0;
+        gameState.maxLevelReached = 0;
         gameState.unmovedSeconds = 0;
         updateStrikesUI();
         
@@ -462,11 +526,13 @@ function gameLoop() {
         let newLevel = calculateNewLevel(effectiveSeconds);
         
         if (newLevel > gameState.currentLevel) {
+            playLevelUpSound();
             const newColorName = getAuraColor(newLevel);
             const newColorHex = getAuraHexColor(newColorName);
             if (typeof burstAuraParticles === 'function') burstAuraParticles(newColorHex);
         }
         gameState.currentLevel = newLevel;
+        if (newLevel > gameState.maxLevelReached) gameState.maxLevelReached = newLevel;
     }
     
     updateUI();
@@ -519,6 +585,8 @@ function registerStrike() {
     
     if (typeof burstAuraParticles === 'function') burstAuraParticles(oldColorHex);
 
+    playStrikeSound();
+
     if (gameState.strikes === 1) {
         gameState.totalElapsedSeconds = Math.max(0, gameState.totalElapsedSeconds - 300);
         showBonusAlert(`Strike 1! Lost 5 mins! Aura disintegrating!`);
@@ -548,21 +616,57 @@ function gameOver(msg = "Aura Broken: Please remain incredibly still.") {
     gameState.isPaused = false;
     clearInterval(gameLoopInterval);
 
-    setTimeout(() => alert(msg), 200);
-
     document.body.classList.remove('is-meditating');
     document.getElementById('btn_start').classList.remove('hidden');
     document.getElementById('btn_start').innerText = "RETRY";
-    document.getElementById('btn_pause').classList.add('hidden');
+    document.getElementById('playing_controls').classList.add('hidden');
     document.getElementById('btn_pause').innerText = "PAUSE";
 
-    document.getElementById('status_text').innerText = "AURA BROKEN (3 Strikes)";
+    document.getElementById('status_text').innerText = "SESSION ENDED";
     document.getElementById('status_text').classList.add('status-pulse');
     
     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
     
+    // Save to history
+    if (currentUser && gameState.totalElapsedSeconds > 0 && !gameState.isDemo) {
+        let history = JSON.parse(localStorage.getItem(`meditation_history_${currentUser.email || currentUser.name}`) || "[]");
+        history.push({
+            date: Date.now(),
+            seconds: gameState.totalElapsedSeconds,
+            maxLevel: gameState.maxLevelReached,
+            piePoints: gameState.piePoints,
+            strikes: gameState.strikes
+        });
+        localStorage.setItem(`meditation_history_${currentUser.email || currentUser.name}`, JSON.stringify(history));
+    }
+    
+    showReportCard();
     gameState.totalElapsedSeconds = 0; // Lost level progress
     saveProgress();
+}
+
+function showReportCard() {
+    const m = Math.floor(gameState.totalElapsedSeconds / 60).toString().padStart(2, '0');
+    const s = (gameState.totalElapsedSeconds % 60).toString().padStart(2, '0');
+    
+    document.getElementById('rc_time').innerText = `${m}:${s}`;
+    document.getElementById('rc_level').innerText = gameState.maxLevelReached;
+    document.getElementById('rc_strikes').innerText = gameState.strikes;
+    document.getElementById('rc_points').innerText = `+${gameState.piePoints}`;
+    
+    document.getElementById('report_card').classList.remove('hidden');
+}
+
+function closeReportCard() {
+    document.getElementById('report_card').classList.add('hidden');
+    goHome();
+    updateLifetimeStats();
+    resetProgress();
+}
+
+function stopSession() {
+    if (!gameState.isRunning) return;
+    gameOver("Session Terminated By User");
 }
 
 function updateUI() {

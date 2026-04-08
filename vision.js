@@ -112,6 +112,47 @@ function renderParticles(ctx, colorHex, w, h) {
     ctx.restore();
 }
 
+function drawCalibrationReticle(ctx, pt, w, h) {
+    const cx = pt.x * w;
+    const cy = pt.y * h;
+    const time = Date.now() / 1000;
+    
+    ctx.save();
+    ctx.translate(cx, cy);
+    
+    // Outer rotating ring
+    ctx.rotate(time * 2);
+    ctx.beginPath();
+    ctx.arc(0, 0, 60, 0, Math.PI * 1.5);
+    ctx.strokeStyle = 'rgba(0, 255, 204, 0.8)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Inner counter-rotating ring
+    ctx.rotate(-time * 3);
+    ctx.beginPath();
+    ctx.arc(0, 0, 35, 0, Math.PI);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#00ffcc';
+    ctx.shadowColor = '#00ffcc';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    
+    ctx.restore();
+    
+    // Scanning HUD text
+    ctx.fillStyle = '#00ffcc';
+    ctx.font = '12px Courier';
+    ctx.fillText('TARGET LOCK AQCD', cx + 70, cy - 40);
+    ctx.fillText('AURA TRACKING...', cx + 70, cy - 20);
+}
+
 function getChestNode(poseArr) {
     if (!poseArr || !poseArr[11] || !poseArr[12]) return null;
     return {
@@ -315,36 +356,46 @@ function initVision() {
                 }
                 
                 // 3. UI Node Rendering
-                if (!gameState.isRunning || isCustomizingTargets) {
+                if (!gameState.isRunning || isCustomizingTargets || isCalibrating) {
                      if (results.poseLandmarks) {
-                        // Draw skeletal connections faintly mapped
-                        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: 'rgba(255, 255, 255, 0.1)', lineWidth: 1});
                         
-                        // Highlight all nodes when selecting custom targets
-                        if (isCustomizingTargets) {
-                            const drawTargetPointForCustomizing = (pt, id) => {
-                                canvasCtx.beginPath();
-                                canvasCtx.arc(pt.x * w, pt.y * h, 6, 0, 2*Math.PI);
-                                if (customTrackingPoints.includes(id)) {
-                                    canvasCtx.fillStyle = '#00ffcc'; // Green as requested
-                                    canvasCtx.shadowColor = '#00ffcc';
-                                    canvasCtx.shadowBlur = 10;
-                                } else {
-                                    canvasCtx.fillStyle = '#ff3366'; // Red
-                                    canvasCtx.shadowBlur = 0;
-                                }
-                                canvasCtx.fill();
-                                canvasCtx.shadowBlur = 0;
-                            };
-
+                        if (isCalibrating) {
                             const chestNode = getChestNode(results.poseLandmarks);
-                            
-                            for (let i = 0; i <= 32; i++) {
-                                const pt = results.poseLandmarks[i];
-                                if (pt && pt.visibility > 0.5) drawTargetPointForCustomizing(pt, i);
-                            }
                             if (chestNode && chestNode.visibility > 0.5) {
-                                drawTargetPointForCustomizing(chestNode, 100);
+                                drawCalibrationReticle(canvasCtx, chestNode, w, h);
+                            }
+                        } else {
+                            // Draw skeletal connections faintly mapped
+                            if (typeof drawConnectors === 'function') {
+                                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: 'rgba(255, 255, 255, 0.1)', lineWidth: 1});
+                            }
+                            
+                            // Highlight all nodes when selecting custom targets
+                            if (isCustomizingTargets) {
+                                const drawTargetPointForCustomizing = (pt, id) => {
+                                    canvasCtx.beginPath();
+                                    canvasCtx.arc(pt.x * w, pt.y * h, 6, 0, 2*Math.PI);
+                                    if (customTrackingPoints.includes(id)) {
+                                        canvasCtx.fillStyle = '#00ffcc'; // Green as requested
+                                        canvasCtx.shadowColor = '#00ffcc';
+                                        canvasCtx.shadowBlur = 10;
+                                    } else {
+                                        canvasCtx.fillStyle = '#ff3366'; // Red
+                                        canvasCtx.shadowBlur = 0;
+                                    }
+                                    canvasCtx.fill();
+                                    canvasCtx.shadowBlur = 0;
+                                };
+    
+                                const chestNode = getChestNode(results.poseLandmarks);
+                                
+                                for (let i = 0; i <= 32; i++) {
+                                    const pt = results.poseLandmarks[i];
+                                    if (pt && pt.visibility > 0.5) drawTargetPointForCustomizing(pt, i);
+                                }
+                                if (chestNode && chestNode.visibility > 0.5) {
+                                    drawTargetPointForCustomizing(chestNode, 100);
+                                }
                             }
                         }
                     }
@@ -360,8 +411,12 @@ function initVision() {
             }
         });
 
+        let frameCounter = 0;
         camera = new Camera(videoElement, {
             onFrame: async () => {
+                frameCounter++;
+                if (frameCounter % 2 !== 0) return; // Drop 50% of frames to hit ~15 FPS natively
+                
                 if (canvasElement.width !== videoElement.videoWidth) {
                    canvasElement.width = videoElement.videoWidth;
                    canvasElement.height = videoElement.videoHeight;
