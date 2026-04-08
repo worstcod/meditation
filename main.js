@@ -520,8 +520,8 @@ function gameLoop() {
             showBonusAlert("21 MINUTE STREAK! +7 Pie Points (DEEP ZEN)");
         }
         
-        // Use logic for calculating Aura Evolution purely visually via totalElapsedSeconds (ignoring pie points offset)
-        let effectiveSeconds = gameState.totalElapsedSeconds;
+        // Pie Points directly accelerate Aura Evolution! (1 Pie Point = 60s boost)
+        let effectiveSeconds = gameState.totalElapsedSeconds + (gameState.piePoints * 60);
 
         let newLevel = calculateNewLevel(effectiveSeconds);
         
