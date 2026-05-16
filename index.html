@@ -60,9 +60,13 @@
                 <span style="color: #ccc;">Movement Strikes</span>
                 <strong id="rc_strikes" style="color: var(--accent-error); font-size: 1.1rem;">0</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                 <span style="color: #ccc;">Pie Points Earned</span>
                 <strong id="rc_points" style="color: var(--accent-gold); font-size: 1.1rem;">+0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                <span style="color: #ccc;">Best Stillness</span>
+                <strong id="rc_best_streak" style="color: var(--accent-success); font-size: 1.1rem;">0m 0s</strong>
             </div>
             <button class="btn-primary" onclick="closeReportCard()">CONTINUE</button>
         </aside>
@@ -72,6 +76,14 @@
         <!-- ===================================== -->
         <section id="login_screen" class="screen-layer" style="display: flex; justify-content: center; align-items: center; gap: 40px; padding: 20px;">
             <div class="login-container glass-panel" style="padding: 30px; width: 400px;">
+                
+                <!-- Development Mode Notice -->
+                <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid var(--accent-gold); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.5; text-align: left;">
+                    <strong style="color: var(--accent-gold); font-size: 1rem; display: block; margin-bottom: 5px;">🚧 Development Mode</strong>
+                    <p style="color: rgba(255, 255, 255, 0.9); margin-bottom: 8px;"><strong>Features:</strong> Leaderboard, realtime body movement analysis and tracker, and account personalization.</p>
+                    <p style="color: rgba(255, 255, 255, 0.9);"><strong>How to test:</strong> For a new user, just signup with your email id and password and then directly use those credentials in login.</p>
+                </div>
+
                 <!-- Tab Switching -->
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button class="glass-btn" id="btn_tab_signin" onclick="switchLoginTab('signin')" style="border-color: var(--accent-gold);">Sign In</button>
@@ -142,12 +154,15 @@
                 <h1 class="main-title">DOPAMINE CHALLENGE</h1>
                 <p class="subtitle">ABOUT THE APP</p>
                 <div class="rules-box glass-panel">
-                    <p>Welcome to the meditation platform. Sit perfectly still to evolve your energy from Black to Silver.</p>
+                    <p>Welcome to the meditation platform. Sit perfectly still to evolve your energy from Black to Gold.</p>
                     <ul class="rules-list">
                         <li>Stay perfectly still. Large movements register as strikes.</li>
-                        <li>3 strikes = Reset your Unmoved Timer & loss of Pie points.</li>
-                        <li>Unmoved for 3 mins = +7 Pie Points.</li>
-                        <li>Unmoved for 21 mins = +7 Pie Points.</li>
+                        <li>Strike 1 = Lose 50% of aura progress + 3 Pie Points.</li>
+                        <li>Strike 2 = Lose 75% of aura progress + 5 Pie Points.</li>
+                        <li>Strike 3 = Session ends. Aura broken.</li>
+                        <li>Unmoved 3m = +7 · 5m = +3 · 10m = +5 · 15m = +5</li>
+                        <li>Unmoved 21m = +7 · 30m = +10 · 45m = +10</li>
+                        <li>Unmoved 1hr = +15 · 108m = +21 (Buddha State!)</li>
                         <li>Pie Points directly boost your Aura Level evolution!</li>
                     </ul>
                     <button class="glass-btn btn-danger" style="margin-top: 15px; width: auto; padding: 5px 15px;" onclick="logOut()">Logout</button>
@@ -155,7 +170,7 @@
                 
                 <div class="stats-box glass-panel" style="margin-top: 20px; padding: 20px;">
                     <h3 style="font-size: 1rem; color: var(--accent-gold); margin-bottom: 15px; letter-spacing: 2px;">LIFETIME HABITS</h3>
-                    <div style="display: flex; justify-content: space-around;">
+                    <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
                         <div style="text-align: center;">
                             <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">SESSIONS</div>
                             <div id="stat_sessions" style="font-size: 1.8rem; font-weight: 800; color: #fff;">0</div>
@@ -163,6 +178,17 @@
                         <div style="text-align: center;">
                             <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">MINUTES</div>
                             <div id="stat_minutes" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-success);">0</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">🔥 STREAK</div>
+                            <div id="stat_streak" style="font-size: 1.8rem; font-weight: 800; color: #ff9800;">0</div>
+                            <div style="font-size: 0.65rem; color: #666;">days</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 5px;">🏅 BEST STILL</div>
+                            <div id="stat_best" style="font-size: 1.4rem; font-weight: 800; color: var(--accent-gold);">0m 0s</div>
                         </div>
                     </div>
                 </div>

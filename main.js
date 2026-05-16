@@ -4,7 +4,7 @@ const AURA_COLORS = [
     'Black', 'Dark Brown', 'Brown', 'Muddy Red', 'Red', 'Red-Orange', 
     'Orange', 'Yellow-Orange', 'Yellow', 'Yellow-Green', 'Green', 
     'Emerald Green', 'Blue-Green', 'Light Blue', 'Blue', 'Indigo', 
-    'Violet', 'Lavender', 'White', 'Gold', 'Silver'
+    'Violet', 'Lavender', 'White', 'Silver', 'Gold'
 ];
 
 // 21 Milestones scaling up to exactly 108 minutes (6480 seconds) in a curved sequence
@@ -16,8 +16,10 @@ const LEVEL_THRESHOLDS = [
 let gameState = {
     currentLevel: 0,
     totalElapsedSeconds: 0,
+    actualSessionSeconds: 0,
     maxLevelReached: 0,
     unmovedSeconds: 0,
+    bestUnmovedSeconds: 0,
     strikes: 0,
     piePoints: 0,
     isRunning: false,
@@ -158,12 +160,61 @@ function checkAuth() {
 
 function updateLifetimeStats() {
     if (!currentUser) return;
-    let history = JSON.parse(localStorage.getItem(`meditation_history_${currentUser.email || currentUser.name}`) || "[]");
+    const userKey = currentUser.email || currentUser.name;
+    let history = JSON.parse(localStorage.getItem(`meditation_history_${userKey}`) || "[]");
     let totalSessions = history.length;
     let totalSeconds = history.reduce((acc, session) => acc + session.seconds, 0);
     
     document.getElementById('stat_sessions').innerText = totalSessions;
     document.getElementById('stat_minutes').innerText = Math.floor(totalSeconds / 60);
+    
+    // Daily Streak Calculation
+    let streak = 0;
+    if (history.length > 0) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Get unique session dates (as day-level timestamps)
+        const sessionDays = [...new Set(history.map(s => {
+            const d = new Date(s.date);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime();
+        }))].sort((a, b) => b - a); // Most recent first
+        
+        // Count consecutive days starting from today or yesterday
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        let checkDate = today.getTime();
+        
+        // Allow streak to start from today OR yesterday (in case they haven't meditated today yet)
+        if (sessionDays[0] === checkDate) {
+            streak = 1;
+            checkDate -= oneDayMs;
+        } else if (sessionDays[0] === checkDate - oneDayMs) {
+            streak = 1;
+            checkDate = sessionDays[0] - oneDayMs;
+        }
+        
+        if (streak > 0) {
+            for (let i = 1; i < sessionDays.length; i++) {
+                if (sessionDays[i] === checkDate) {
+                    streak++;
+                    checkDate -= oneDayMs;
+                } else if (sessionDays[i] < checkDate) {
+                    break;
+                }
+            }
+        }
+    }
+    document.getElementById('stat_streak').innerText = streak;
+    
+    // Personal Best Stillness
+    let bestStillness = 0;
+    history.forEach(s => {
+        if (s.bestStreak && s.bestStreak > bestStillness) bestStillness = s.bestStreak;
+    });
+    const bestMin = Math.floor(bestStillness / 60);
+    const bestSec = bestStillness % 60;
+    document.getElementById('stat_best').innerText = `${bestMin}m ${bestSec}s`;
 }
 
 function switchLoginTab(tab) {
@@ -361,7 +412,7 @@ function goHome() {
     }
     
     // Reset state
-    gameState = { currentLevel: 0, totalElapsedSeconds: 0, unmovedSeconds: 0, strikes: 0, piePoints: 0, isRunning: false, blurRoom: false, isDemo: false, usingAudio: false, mode: 'normal' };
+    gameState = { currentLevel: 0, totalElapsedSeconds: 0, actualSessionSeconds: 0, maxLevelReached: 0, unmovedSeconds: 0, bestUnmovedSeconds: 0, strikes: 0, piePoints: 0, isRunning: false, blurRoom: false, isDemo: false, isPaused: false, usingAudio: false, mode: 'normal' };
     
     document.getElementById('level_display').innerText = "1";
     document.getElementById('preview_panel').classList.remove('hidden');
@@ -441,8 +492,10 @@ function startGame() {
         gameState.isPaused = false;
         gameState.strikes = 0;
         gameState.totalElapsedSeconds = 0;
+        gameState.actualSessionSeconds = 0;
         gameState.maxLevelReached = 0;
         gameState.unmovedSeconds = 0;
+        gameState.bestUnmovedSeconds = 0;
         updateStrikesUI();
         
         if (gameState.usingAudio && ytPlayer && typeof ytPlayer.playVideo === 'function') {
@@ -481,7 +534,11 @@ function gameLoop() {
     if (!gameState.isRunning || gameState.isPaused) return;
     
     gameState.totalElapsedSeconds++;
+    gameState.actualSessionSeconds++;
     gameState.unmovedSeconds++;
+    if (gameState.unmovedSeconds > gameState.bestUnmovedSeconds) {
+        gameState.bestUnmovedSeconds = gameState.unmovedSeconds;
+    }
     
     // Core Score logic
     const pointIncrement = 1 / 3.1413;
@@ -511,13 +568,35 @@ function gameLoop() {
             gameState.eyesViolationTimer = 0;
         }
 
-        // Streaks for Pie Points
-        if (gameState.unmovedSeconds === 180) { // 3 min
+        // Streaks for Pie Points — frequent dopamine milestones
+        const unmoved = gameState.unmovedSeconds;
+        if (unmoved === 180) { // 3 min
             awardPiePoints(7);
-            showBonusAlert("3 MINUTE STREAK! +7 Pie Points");
-        } else if (gameState.unmovedSeconds === 1260) { // 21 min
+            showBonusAlert("🔥 3 MIN STREAK! +7 Pie Points");
+        } else if (unmoved === 300) { // 5 min
+            awardPiePoints(3);
+            showBonusAlert("🧘 5 MIN FOCUS! +3 Pie Points");
+        } else if (unmoved === 600) { // 10 min
+            awardPiePoints(5);
+            showBonusAlert("✨ 10 MIN DEEP CALM! +5 Pie Points");
+        } else if (unmoved === 900) { // 15 min
+            awardPiePoints(5);
+            showBonusAlert("💎 15 MIN MASTERY! +5 Pie Points");
+        } else if (unmoved === 1260) { // 21 min
             awardPiePoints(7);
-            showBonusAlert("21 MINUTE STREAK! +7 Pie Points (DEEP ZEN)");
+            showBonusAlert("🌟 21 MIN ZEN! +7 Pie Points");
+        } else if (unmoved === 1800) { // 30 min
+            awardPiePoints(10);
+            showBonusAlert("⚡ 30 MIN TRANSCENDENCE! +10 Pie Points");
+        } else if (unmoved === 2700) { // 45 min
+            awardPiePoints(10);
+            showBonusAlert("🌊 45 MIN ASCENDING! +10 Pie Points");
+        } else if (unmoved === 3600) { // 60 min
+            awardPiePoints(15);
+            showBonusAlert("👁️ 1 HOUR ENLIGHTENED! +15 Pie Points");
+        } else if (unmoved === 6480) { // 108 min
+            awardPiePoints(21);
+            showBonusAlert("🪷 108 MIN — BUDDHA STATE! +21 Pie Points");
         }
         
         // Pie Points directly accelerate Aura Evolution! (1 Pie Point = 60s boost)
@@ -579,6 +658,12 @@ function registerStrike() {
     window.lastStrike = Date.now();
     
     gameState.strikes++;
+    gameState.unmovedSeconds = 0; // Reset streak on movement
+    
+    // Deduct Pie Points on movement (escalating: 3 on strike 1, 5 on strike 2)
+    const piePenalty = gameState.strikes === 1 ? 3 : 5;
+    const pointsLost = Math.min(gameState.piePoints, piePenalty);
+    gameState.piePoints -= pointsLost;
     
     const oldColorName = getAuraColor(gameState.currentLevel);
     const oldColorHex = getAuraHexColor(oldColorName);
@@ -588,11 +673,23 @@ function registerStrike() {
     playStrikeSound();
 
     if (gameState.strikes === 1) {
-        gameState.totalElapsedSeconds = Math.max(0, gameState.totalElapsedSeconds - 300);
-        showBonusAlert(`Strike 1! Lost 5 mins! Aura disintegrating!`);
+        // Proportional: lose 50% of elapsed time, minimum 30s so even early strikes hurt
+        const timeLoss = Math.max(30, Math.floor(gameState.totalElapsedSeconds * 0.5));
+        gameState.totalElapsedSeconds = Math.max(0, gameState.totalElapsedSeconds - timeLoss);
+        // Deduct 30% of accumulated score points
+        gameState.totalPoints = Math.max(0, (gameState.totalPoints || 0) * 0.7);
+        const lostMins = Math.floor(timeLoss / 60);
+        const lostSecs = timeLoss % 60;
+        showBonusAlert(`Strike 1! Lost ${lostMins}m ${lostSecs}s! Aura disintegrating!`);
     } else if (gameState.strikes === 2) {
-        gameState.totalElapsedSeconds = Math.max(0, gameState.totalElapsedSeconds - 600);
-        showBonusAlert(`Strike 2! Lost 10 mins! Aura heavily disintegrating!`);
+        // Proportional: lose 75% of elapsed time, minimum 60s
+        const timeLoss = Math.max(60, Math.floor(gameState.totalElapsedSeconds * 0.75));
+        gameState.totalElapsedSeconds = Math.max(0, gameState.totalElapsedSeconds - timeLoss);
+        // Deduct 60% of accumulated score points
+        gameState.totalPoints = Math.max(0, (gameState.totalPoints || 0) * 0.4);
+        const lostMins = Math.floor(timeLoss / 60);
+        const lostSecs = timeLoss % 60;
+        showBonusAlert(`Strike 2! Lost ${lostMins}m ${lostSecs}s! Aura crumbling!`);
     } else if (gameState.strikes >= 3) {
         if (gameState.isDemo) {
             const retry = confirm("Demo Failed: You have been moving! You must remain completely unmoved.\n\nClick OK to Restart the 1-Min Demo, or Cancel to go back to Home.");
@@ -627,32 +724,40 @@ function gameOver(msg = "Aura Broken: Please remain incredibly still.") {
     
     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
     
-    // Save to history
-    if (currentUser && gameState.totalElapsedSeconds > 0 && !gameState.isDemo) {
+    // Save to history using actualSessionSeconds so time isn't lost due to strikes
+    if (currentUser && gameState.actualSessionSeconds > 0 && !gameState.isDemo) {
         let history = JSON.parse(localStorage.getItem(`meditation_history_${currentUser.email || currentUser.name}`) || "[]");
         history.push({
             date: Date.now(),
-            seconds: gameState.totalElapsedSeconds,
+            seconds: gameState.actualSessionSeconds,
             maxLevel: gameState.maxLevelReached,
             piePoints: gameState.piePoints,
-            strikes: gameState.strikes
+            strikes: gameState.strikes,
+            bestStreak: gameState.bestUnmovedSeconds
         });
         localStorage.setItem(`meditation_history_${currentUser.email || currentUser.name}`, JSON.stringify(history));
     }
     
     showReportCard();
     gameState.totalElapsedSeconds = 0; // Lost level progress
+    gameState.actualSessionSeconds = 0;
     saveProgress();
 }
 
 function showReportCard() {
-    const m = Math.floor(gameState.totalElapsedSeconds / 60).toString().padStart(2, '0');
-    const s = (gameState.totalElapsedSeconds % 60).toString().padStart(2, '0');
+    // Show actual wall-clock time, not the penalized totalElapsedSeconds
+    const m = Math.floor(gameState.actualSessionSeconds / 60).toString().padStart(2, '0');
+    const s = (gameState.actualSessionSeconds % 60).toString().padStart(2, '0');
     
     document.getElementById('rc_time').innerText = `${m}:${s}`;
     document.getElementById('rc_level').innerText = gameState.maxLevelReached;
     document.getElementById('rc_strikes').innerText = gameState.strikes;
     document.getElementById('rc_points').innerText = `+${gameState.piePoints}`;
+    
+    // Best stillness streak this session
+    const bm = Math.floor(gameState.bestUnmovedSeconds / 60);
+    const bs = gameState.bestUnmovedSeconds % 60;
+    document.getElementById('rc_best_streak').innerText = `${bm}m ${bs}s`;
     
     document.getElementById('report_card').classList.remove('hidden');
 }
@@ -742,6 +847,7 @@ function resetProgress() {
     if (confirm("Are you sure you want to hard reset all progress?")) {
         gameState.currentLevel = 0;
         gameState.totalElapsedSeconds = 0;
+        gameState.actualSessionSeconds = 0;
         gameState.piePoints = 0;
         gameState.unmovedSeconds = 0;
         saveProgress();

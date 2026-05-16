@@ -538,8 +538,8 @@ button {
     63%  { background-color: #3f51b5; box-shadow: 0 0 90px 45px #3f51b5; }
     72%  { background-color: #9c27b0; box-shadow: 0 0 100px 50px #9c27b0; }
     81%  { background-color: #ffffff; box-shadow: 0 0 120px 60px #ffffff; }
-    95%  { background-color: #ffd700; box-shadow: 0 0 140px 70px #ffd700; }
-    100% { background-color: #c0c0c0; box-shadow: 0 0 160px 80px #c0c0c0; }
+    95%  { background-color: #c0c0c0; box-shadow: 0 0 140px 70px #c0c0c0; }
+    100% { background-color: #ffd700; box-shadow: 0 0 160px 80px #ffd700; }
 }
 
 @keyframes textTimelapse {
@@ -553,6 +553,6 @@ button {
     63%  { content: "Level 130: 65m"; color: #7f91f5; }
     72%  { content: "Level 160: 80m"; color: #dc67f0; }
     81%  { content: "Level 190: 95m"; color: #ffffff; }
-    95%  { content: "Level 216: 108m"; color: #ffd700; }
-    100% { content: "Beyond: Buddha"; color: #c0c0c0; }
+    95%  { content: "Level 216: 108m"; color: #c0c0c0; }
+    100% { content: "Beyond: Buddha"; color: #ffd700; }
 }

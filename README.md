@@ -1,81 +1,104 @@
-# 🧘 Dopamine Challenge: Meditation
+# Dopamine Challenge: Meditation
 
-A premium, camera-based meditation application designed to gamify mindfulness through the "Dopamine Challenge" concept. Using real-time AI computer vision (Google MediaPipe), the app tracks your posture and eye-stillness, rewarding your focus with a visually evolving energy "Aura" that transforms from deep Black to glowing Silver.
+Welcome to the **Dopamine Challenge**, a camera-based meditation platform designed to gamify physical stillness. Using advanced computer vision, the app tracks your posture and rewards you for remaining perfectly still while penalizing movement. 
 
----
-
-## ✨ Key Features
-
-- **🛡️ Shield of Stillness:** High-precision postural tracking using your webcam. If you move beyond the threshold, you register a "Strike". 
-- **👁️ Zen Eye-Tracking:** Automatically detects if your eyes are open or closed. After 30 seconds of meditation, keeping your eyes open for more than 3 seconds results in an immediate failure.
-- **🌌 Dynamic Aura Engine:** Your bodily silhouette glows with an evolving aura. As you level up through time-based milestones, the halo grows thicker, denser, and more vibrant.
-- **🌊 Energy Bubbles:** Ambient particles of your current level's color fall into your presence and "submerge" into your aura when you level up.
-- **📶 Interactive Custom Targets:** Don't just use defaults—manually click on your forehead, chin, or shoulders on the live camera feed to set custom tracking points for your specific meditation needs.
-- **📱 PWA & Mobile Ready:** Fully configured as a Progressive Web App (PWA). Can be installed on Android/iOS and run fullscreen like a native APK.
+The ultimate goal is to evolve your energy aura from **Black** to **Gold (Buddha State)**.
 
 ---
 
-## 🎮 Game Modes (Yoga Stages)
+## 🌟 Key Features
 
-The app features specialized timing intervals based on traditional Yoga stages:
-
-| Mode | Level Up Interval | Difficulty |
-| :--- | :--- | :--- |
-| **Normal** | Geometric (30s, 60s, 120s...) | Dynamic |
-| **Dharana** | Every 21 Seconds | Easy |
-| **Dhyana** | Every 48 Seconds | Medium |
-| **Samadhi** | Every 108 Seconds | Hard |
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend:** HTML5, CSS3 (Vanilla), JavaScript (ES6+)
-- **AI Core:** [Google MediaPipe Holistic](https://google.github.io/mediapipe/solutions/holistic.html) for real-time body and face tracking.
-- **Physics:** Custom particle physics engine for aura bubbles.
-- **PWA:** Service Workers and Web App Manifest for offline support and mobile installation.
+- **Real-Time Body Tracking**: Powered by Google MediaPipe, the app uses your webcam to monitor your body landmarks (Shoulders, Chest, Nose, Eyes) in 3D space.
+- **Aura Evolution**: As you remain still, a dynamic, glowing aura is projected onto your silhouette. The aura grows denser, thicker, and changes color as you progress through 21 distinct levels.
+- **Custom Target Nodes**: Click on the canvas before a session to select specific body parts you want the app to track (e.g., track *only* your left hand and right knee).
+- **Eye Tracking**: True meditation requires closed eyes. If your eyes remain open for 3 continuous seconds (after the first 30 seconds), the session instantly ends.
+- **Pie Points System**: Earn special points by hitting long streaks of absolute stillness. Pie Points act as a time-multiplier, rapidly accelerating your Aura evolution.
+- **Lifetime Habits Dashboard**: Tracks your total sessions, total minutes meditated, daily consecutive streak (🔥), and your all-time personal best stillness record (🏅).
+- **Global Leaderboards**: Compare your peak aura levels against legendary masters and other users based on the selected Yoga Mode.
 
 ---
 
-## 🚀 Getting Started
+## ⚖️ Game Mechanics & Rules
 
-### Prerequisites
-- A modern web browser with camera access (Chrome/Edge recommended).
-- A stable webcam or integrated laptop camera.
+The game revolves around **The Unmoved Timer**. Every second you sit still pushes you closer to the next aura color. Movement sets you back.
 
-### Running Locally
-1. Clone or download this repository.
-2. Open `index.html` in your browser.
-3. *Note: For the Service Worker and PWA features to activate, the app must be served over HTTPS or `localhost` (e.g., using VS Code Live Server).*
+### 🧘 Pie Points (The Rewards)
+Pie Points are awarded for prolonged periods of *perfect, unbroken stillness*. Every 1 Pie Point artificially boosts your Aura progression by 60 seconds.
 
-### How to Play
-1. **Sign Up/Sign In**: Create a local profile to track your progress and Pie Points.
-2. **Select Mode**: Choose between Normal, Dharana, Dhyana, or Samadhi.
-3. **Calibrate**: Sit still in front of the camera. The AI will find your shoulders, head, and chest.
-4. **Meditate**: Keep your eyes closed and stay perfectly still. Achievements are awarded at the 3-minute and 21-minute marks!
+- **3 mins** unmoved = **+7** Pie Points
+- **5 mins** unmoved = **+3** Pie Points
+- **10 mins** unmoved = **+5** Pie Points
+- **15 mins** unmoved = **+5** Pie Points
+- **21 mins** unmoved = **+7** Pie Points
+- **30 mins** unmoved = **+10** Pie Points
+- **45 mins** unmoved = **+10** Pie Points
+- **1 hour** unmoved = **+15** Pie Points
+- **108 mins** unmoved = **+21** Pie Points (Buddha State)
 
----
+### ⚠️ Strikes (The Penalties)
+Large body movements register as strikes. The app dynamically calculates your shoulder width to set a fair movement threshold.
 
-## 📲 How to Install (APK Instructions)
-
-Since this app is a **Progressive Web App**, you can get it on your phone easily:
-
-1. **Host the app** on a free service (GitHub Pages, Netlify, or Vercel).
-2. **Visit the URL** on your Android/iOS phone.
-3. **Chrome (Android)**: Tap "Add to Home Screen" or the "Install App" prompt.
-4. **Safari (iOS)**: Tap the Share button and select "Add to Home Screen".
-5. **For a real `.apk` file**: Go to [PWABuilder.com](https://www.pwabuilder.com/), paste your URL, and download the "Android App Package".
+- **Strike 1**: You lose **50% of your current aura progress** (minimum 30 seconds lost), lose **30% of your decimal score**, and lose **3 Pie Points**. Your Unmoved Timer resets to 0.
+- **Strike 2**: You lose **75% of your current aura progress** (minimum 60 seconds lost), lose **60% of your decimal score**, and lose **5 Pie Points**. Your Unmoved Timer resets to 0.
+- **Strike 3**: **Session Terminated.** Your aura breaks entirely, and you are sent to the report card screen.
 
 ---
 
-## 📝 Progression Logic (The 21 Colors)
-Your Aura evolution follows a 21-level path:
-`Black` → `Dark Brown` → `Brown` → `Muddy Red` → `Red` → `Orange` → `Yellow` → `Green` → `Blue` → `Indigo` → `Violet` → `Lavender` → `White` → `Gold` → `Silver`
+## 🪷 The 21 Aura Colors
+Your energy evolves through the following stages:
 
-Pie Points earned from streaks allow you to gain levels faster.
+1. Black
+2. Dark Brown
+3. Brown
+4. Muddy Red
+5. Red
+6. Red-Orange
+7. Orange
+8. Yellow-Orange
+9. Yellow
+10. Yellow-Green
+11. Green
+12. Emerald Green
+13. Blue-Green
+14. Light Blue
+15. Blue
+16. Indigo
+17. Violet
+18. Lavender
+19. White
+20. Silver
+21. **Gold (Buddha State)**
 
 ---
 
-## 📜 Credits
-Built with ❤️ to help people master their focus in a distracted world.
-**Developer:** Antigravity AI Powered by Google DeepMind.
+## ⚙️ Yoga Modes (Difficulties)
+
+Before starting a session, you can choose a Yoga Mode. These modes alter the time required to level up and the strictness of the camera tracking.
+
+### 1. Normal Mode (Default)
+- **Progression**: Curved difficulty. The early levels are fast (30 seconds to reach Level 1), but the time required increases exponentially as you approach Gold. 
+- **Total Time to Gold**: Exactly **108 minutes**.
+- **Tracking Strictness**: Normal (allows movement within 15% of your shoulder width).
+
+### 2. Dharana (Easy Focus)
+- **Progression**: Linear and fast. Your aura color upgrades strictly every **21 seconds**.
+- **Total Time to Gold**: **7 minutes** (420 seconds).
+- **Tracking Strictness**: Normal (15% shoulder width).
+
+### 3. Dhyana (Medium Contemplation)
+- **Progression**: Linear and moderate. Your aura color upgrades strictly every **48 seconds**.
+- **Total Time to Gold**: **16 minutes** (960 seconds).
+- **Tracking Strictness**: Normal (15% shoulder width).
+
+### 4. Samadhi (Hard / Master Level)
+- **Progression**: Linear and slow. Your aura color upgrades strictly every **108 seconds**.
+- **Total Time to Gold**: **36 minutes** (2160 seconds).
+- **Tracking Strictness**: **Extremely Strict**. The movement threshold is cut in half (only 8% of your shoulder width is allowed). Furthermore, strikes register twice as fast (5 frames of movement instead of 10). Breathing heavily is enough to break your aura in Samadhi mode.
+
+---
+
+## 🧪 How to Test
+1. Make sure you are in a well-lit room so the camera can read your posture.
+2. In the "Environment" settings, you can check **"Blur My Room"** for privacy.
+3. **For New Users**: On the login screen, click the **Sign Up** tab. Enter any name, age, email, and password to register a local account. Then, switch back to the **Sign In** tab and use those exact credentials to log in.
+4. **Quick Demo**: Click the "👀 Watch 1-Min Demo Journey" button to see a rapid time-lapse of the 21 aura colors wrapping around you in just 60 seconds.
